@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuiz Sains 4 OXFORD: Tenaga & Bahan</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Include html2canvas for certificate generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Include canvas-confetti for celebration -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap');
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .studio-bg {
+            background-image: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, rgba(0, 0, 0, 0.5) 100%);
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.8);
+        }
+
+        .btn-game {
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3), inset 0 2px 4px rgba(255,255,255,0.2);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .btn-game:hover:not(:disabled) {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(255,255,255,0.3);
+            filter: brightness(1.1);
+        }
+
+        .btn-game:active:not(:disabled) {
+            transform: translateY(2px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .btn-game:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .option-btn {
+            background: linear-gradient(to bottom, #1e3c72, #2a5298);
+            border: 2px solid #4a90e2;
+        }
+        
+        .option-btn.correct {
+            background: linear-gradient(to bottom, #11998e, #38ef7d) !important;
+            border-color: #fff;
+            animation: pulse-green 1s infinite;
+        }
+        
+        .option-btn.wrong {
+            background: linear-gradient(to bottom, #cb2d3e, #ef473a) !important;
+            border-color: #fff;
+        }
+
+        .option-btn.hidden-option {
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(56, 239, 125, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(56, 239, 125, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(56, 239, 125, 0); }
+        }
+
+        .timer-circle {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: conic-gradient(#ef4444 var(--progress), #1f2937 var(--progress));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+        }
+        
+        .timer-inner {
+            width: 70px;
+            height: 70px;
+            background: #111827;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Certificate Styles */
+        #certificate-container {
+            width: 800px;
+            height: 600px;
+            background-color: white;
+            background-image: url('data:image/svg+xml;utf8,<svg width="800" height="600" xmlns="http://www.w3.org/2000/svg"><rect width="800" height="600" fill="%23fdfbfb"/><rect x="20" y="20" width="760" height="560" fill="none" stroke="%23d4af37" stroke-width="10"/><rect x="30" y="30" width="740" height="540" fill="none" stroke="%230f2027" stroke-width="2"/><circle cx="400" cy="500" r="40" fill="%23d4af37" opacity="0.2"/></svg>');
+            color: #0f2027;
+            position: relative;
+            margin: 0 auto;
+            text-align: center;
+            padding: 50px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        
+        .hidden { display: none !important; }
+
+        .modal-overlay {
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+        }
+        
+        .score-anim {
+            animation: pop 0.3s ease-out;
+        }
+        
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.5); color: #fbbf24; }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4 studio-bg">
+
+<div id="intro-screen" class="max-w-2xl w-full bg-gray-900 bg-opacity-80 p-8 rounded-2xl shadow-2xl border border-gray-700 text-center relative overflow-hidden">
+    <!-- Decorative stage lights -->
+    <div class="absolute top-0 left-10 w-2 h-20 bg-yellow-300 rounded-full blur-md opacity-50 transform rotate-45"></div>
+    <div class="absolute top-0 right-10 w-2 h-20 bg-blue-300 rounded-full blur-md opacity-50 transform -rotate-45"></div>
+    
+    <div class="mb-4 inline-block bg-yellow-500 text-black px-4 py-1 rounded-full font-bold text-sm tracking-widest uppercase shadow-lg">
+        Rancangan Kuiz Sains
+    </div>
+    <h1 class="text-4xl md:text-5xl font-extrabold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-500 to-yellow-200 drop-shadow-sm">
+        PINTAR SAINS
+    </h1>
+    <h2 class="text-2xl font-semibold mb-6 text-blue-300">Topik: Tenaga & Bahan</h2>
+    <p class="text-gray-300 mb-8 max-w-lg mx-auto">Sedia untuk diuji? Jawab 30 soalan dalam 3 pusingan mendebarkan. Tuntut gelaran Juara 4 OXFORD!</p>
+    
+    <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 mb-8">
+        <label for="student-name" class="block text-left text-sm font-medium text-gray-400 mb-2">Nama Penuh Murid:</label>
+        <input type="text" id="student-name" class="w-full bg-gray-700 border border-gray-600 rounded-lg py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-lg uppercase" placeholder="CONTOH: ALI BIN ABU" autocomplete="off">
+        
+        <div class="mt-4 flex justify-between items-center bg-gray-700 p-3 rounded-lg border border-gray-600">
+            <span class="text-gray-400">Kelas:</span>
+            <span class="font-bold text-xl text-yellow-400">4 OXFORD</span>
+        </div>
+    </div>
+    
+    <button id="start-btn" class="btn-game w-full py-4 rounded-xl text-xl font-bold bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 flex items-center justify-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" /></svg>
+        MULA PERMAINAN
+    </button>
+    <p class="mt-6 text-sm text-gray-500 italic">Disediakan oleh Cikgu Norkhairil bin Mohamad</p>
+</div>
+
+<div id="game-screen" class="hidden w-full max-w-5xl h-[90vh] flex flex-col">
+    <!-- Header: Score & Round Info -->
+    <div class="flex justify-between items-center bg-gray-900 bg-opacity-90 p-4 rounded-t-2xl border-b-2 border-gray-700">
+        <div class="flex items-center gap-4">
+            <div class="bg-gray-800 px-4 py-2 rounded-lg border border-gray-600">
+                <span class="text-xs text-gray-400 block uppercase">Pemain</span>
+                <span id="display-name" class="font-bold text-yellow-400 truncate max-w-[150px] block">NAMA</span>
+            </div>
+            <div id="round-indicator" class="bg-blue-900 px-4 py-2 rounded-lg border border-blue-500 animate-pulse">
+                <span id="round-name" class="font-bold text-blue-200">Pusingan 1</span>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-6">
+            <!-- Lifelines -->
+            <div class="flex gap-2">
+                <button id="btn-5050" class="btn-game bg-purple-600 hover:bg-purple-500 text-white w-12 h-12 rounded-full font-bold flex items-center justify-center text-sm shadow-[0_0_10px_rgba(147,51,234,0.5)] relative group" title="Talian Hayat 50:50">
+                    50:50
+                    <span class="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">Guna 50:50</span>
+                </button>
+                <button id="btn-hint" class="btn-game bg-indigo-600 hover:bg-indigo-500 text-white w-12 h-12 rounded-full font-bold flex items-center justify-center shadow-[0_0_10px_rgba(79,70,229,0.5)] relative group" title="Petunjuk Hos">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                    <span class="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-black text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">Petunjuk</span>
+                </button>
+            </div>
+            <!-- Score -->
+            <div class="bg-gray-800 px-6 py-2 rounded-xl border-2 border-yellow-500 text-center min-w-[120px]">
+                <span class="text-xs text-gray-400 block uppercase">Mata Terkumpul</span>
+                <span id="score-display" class="font-mono text-3xl font-bold text-yellow-400">0</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Game Area -->
+    <div class="flex-grow bg-gray-900 bg-opacity-80 p-6 flex flex-col justify-center items-center relative overflow-hidden">
+        <!-- Stage Background Effects -->
+        <div class="absolute inset-0 pointer-events-none flex justify-center opacity-20">
+             <div class="w-full max-w-3xl bg-gradient-to-t from-blue-900 to-transparent h-1/2 bottom-0 absolute rounded-t-full filter blur-3xl"></div>
+        </div>
+
+        <!-- Question Container -->
+        <div class="w-full max-w-4xl z-10 relative">
+            <div class="flex justify-between items-end mb-4">
+                <span id="q-counter" class="text-gray-400 font-bold bg-gray-800 px-3 py-1 rounded-full text-sm border border-gray-700">Soalan 1/10</span>
+                <span id="round-multiplier" class="text-yellow-400 font-bold text-sm bg-yellow-900 bg-opacity-50 px-3 py-1 rounded-full border border-yellow-700">10 Mata</span>
+            </div>
+            
+            <div class="bg-gradient-to-r from-blue-900 to-indigo-900 p-8 rounded-2xl border-4 border-blue-400 shadow-[0_0_30px_rgba(59,130,246,0.3)] min-h-[150px] flex items-center justify-center text-center relative mb-8">
+                <!-- Timer placed on question box -->
+                <div class="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 rounded-full p-1 border-2 border-gray-700">
+                    <div id="timer" class="timer-circle" style="--progress: 100%;">
+                        <div class="timer-inner">
+                            <span id="time-display" class="text-white">30</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <h3 id="question-text" class="text-2xl md:text-3xl font-bold leading-tight drop-shadow-md">
+                    Memuatkan soalan...
+                </h3>
+            </div>
+
+            <!-- Hint Display -->
+            <div id="hint-display" class="hidden w-full bg-indigo-900 bg-opacity-80 border-l-4 border-indigo-400 p-4 rounded-r-lg mb-6 text-indigo-100 italic flex items-start gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-400 flex-shrink-0 mt-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
+                <div>
+                    <span class="font-bold block text-sm mb-1 text-indigo-300">Hos Kata:</span>
+                    <span id="hint-text">Ini adalah petunjuk.</span>
+                </div>
+            </div>
+
+            <!-- Options Grid -->
+            <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button class="btn-game option-btn py-4 px-6 rounded-xl text-lg font-semibold text-left flex items-center group relative overflow-hidden" onclick="selectAnswer(0)" id="opt-0">
+                    <span class="bg-black bg-opacity-30 w-8 h-8 rounded-full flex items-center justify-center mr-4 group-hover:bg-opacity-50 transition-colors">A</span>
+                    <span class="opt-text flex-grow z-10">Pilihan A</span>
+                    <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
+                </button>
+                <button class="btn-game option-btn py-4 px-6 rounded-xl text-lg font-semibold text-left flex items-center group relative overflow-hidden" onclick="selectAnswer(1)" id="opt-1">
+                    <span class="bg-black bg-opacity-30 w-8 h-8 rounded-full flex items-center justify-center mr-4 group-hover:bg-opacity-50 transition-colors">B</span>
+                    <span class="opt-text flex-grow z-10">Pilihan B</span>
+                    <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
+                </button>
+                <button class="btn-game option-btn py-4 px-6 rounded-xl text-lg font-semibold text-left flex items-center group relative overflow-hidden" onclick="selectAnswer(2)" id="opt-2">
+                    <span class="bg-black bg-opacity-30 w-8 h-8 rounded-full flex items-center justify-center mr-4 group-hover:bg-opacity-50 transition-colors">C</span>
+                    <span class="opt-text flex-grow z-10">Pilihan C</span>
+                    <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
+                </button>
+                <button class="btn-game option-btn py-4 px-6 rounded-xl text-lg font-semibold text-left flex items-center group relative overflow-hidden" onclick="selectAnswer(3)" id="opt-3">
+                    <span class="bg-black bg-opacity-30 w-8 h-8 rounded-full flex items-center justify-center mr-4 group-hover:bg-opacity-50 transition-colors">D</span>
+                    <span class="opt-text flex-grow z-10">Pilihan D</span>
+                    <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-10 transition-opacity"></div>
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer Footer -->
+    <div class="bg-gray-900 bg-opacity-90 p-3 rounded-b-2xl border-t border-gray-800 text-center text-xs text-gray-500">
+        4 OXFORD | Kuiz Interaktif Sains | Disediakan oleh Cikgu Norkhairil bin Mohamad
+    </div>
+</div>
+
+<!-- Round Transition Modal -->
+<div id="round-modal" class="fixed inset-0 modal-overlay hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-gray-900 border-2 border-yellow-500 rounded-2xl p-8 max-w-lg w-full text-center shadow-[0_0_50px_rgba(234,179,8,0.3)] transform transition-transform scale-95" id="round-modal-content">
+        <div id="round-icon" class="text-6xl mb-4">🚀</div>
+        <h2 id="round-modal-title" class="text-4xl font-black mb-2 text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 to-yellow-600">PUSINGAN 1</h2>
+        <h3 id="round-modal-name" class="text-2xl font-bold mb-4 text-white">Soalan Cepat Tepat</h3>
+        <p id="round-modal-desc" class="text-gray-300 mb-8 text-lg">10 Soalan Asas. Jawab pantas untuk 10 mata setiap satu!</p>
+        <button onclick="startNextRound()" class="btn-game w-full py-3 rounded-xl text-lg font-bold bg-yellow-500 hover:bg-yellow-400 text-gray-900">
+            Sedia! Teruskan
+        </button>
+    </div>
+</div>
+
+<!-- Feedback Message Overlay (Correct/Wrong/Timeout) -->
+<div id="feedback-overlay" class="fixed inset-0 flex items-center justify-center pointer-events-none z-40 hidden">
+    <div id="feedback-content" class="bg-black bg-opacity-90 p-8 rounded-3xl border-4 border-green-500 transform scale-50 opacity-0 transition-all duration-300 text-center">
+        <div id="feedback-icon" class="text-8xl mb-4">✅</div>
+        <h2 id="feedback-title" class="text-5xl font-black text-green-400 mb-2 uppercase tracking-wider">TEPAT!</h2>
+        <p id="feedback-score" class="text-2xl text-white font-bold">+10 Mata</p>
+    </div>
+</div>
+
+<div id="result-screen" class="hidden w-full max-w-4xl h-[90vh] flex flex-col items-center justify-center bg-gray-900 bg-opacity-95 p-8 rounded-2xl shadow-2xl relative overflow-y-auto">
+    
+    <div id="result-content" class="text-center w-full z-10 transition-opacity duration-500">
+        <h1 class="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-yellow-300 via-yellow-500 to-yellow-200 mb-2">TAHNIAH!</h1>
+        <p class="text-xl text-gray-300 mb-6">Anda telah tamat Cabaran Sains 4 OXFORD.</p>
+        
+        <div class="flex justify-center gap-8 mb-8">
+            <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 w-48 shadow-lg">
+                <span class="block text-gray-400 uppercase text-sm mb-2">Markah Akhir</span>
+                <span id="final-score" class="text-5xl font-bold text-yellow-400">0</span>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-2xl border border-gray-700 w-48 shadow-lg">
+                <span class="block text-gray-400 uppercase text-sm mb-2">Pencapaian</span>
+                <span id="final-rank" class="text-3xl font-bold text-blue-400">Saintis</span>
+            </div>
+        </div>
+
+        <button id="show-cert-btn" class="btn-game px-8 py-4 rounded-xl text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 mb-4 inline-flex items-center gap-2 shadow-[0_0_15px_rgba(79,70,229,0.5)]">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" /></svg>
+            Jana Sijil Penyertaan
+        </button>
+    </div>
+
+    <!-- Hidden Certificate Container (for rendering) -->
+    <div id="cert-wrapper" class="hidden flex-col items-center w-full mt-4">
+        <!-- Visual padding wrapper to ensure canvas capture doesn't cut edges -->
+        <div class="p-4 bg-gray-800 rounded-xl overflow-auto max-w-full w-full flex justify-center mb-4 border border-gray-700">
+            <div id="certificate-container" style="transform-origin: top center;">
+                <div style="margin-bottom: 20px;">
+                    <h2 style="font-size: 40px; margin: 0; color: #1e3c72; text-transform: uppercase; letter-spacing: 2px;">Sijil Penyertaan</h2>
+                    <p style="font-size: 18px; color: #666; margin-top: 5px;">PINTAR SAINS: TENAGA & BAHAN</p>
+                </div>
+                
+                <div style="margin: 30px 0;">
+                    <p style="font-size: 16px; font-style: italic; margin-bottom: 15px;">Dengan bangganya dianugerahkan kepada</p>
+                    <div style="border-bottom: 2px solid #d4af37; padding-bottom: 5px; width: 80%; margin: 0 auto;">
+                        <h1 id="cert-name" style="font-size: 42px; margin: 0; font-family: 'Times New Roman', serif; font-weight: bold; color: #000; text-transform: uppercase;">NAMA MURID</h1>
+                    </div>
+                    <p style="font-size: 20px; font-weight: bold; margin-top: 10px; color: #2c3e50;">KELAS: 4 OXFORD</p>
+                </div>
+                
+                <div style="margin-bottom: 30px;">
+                    <p style="font-size: 16px; margin: 5px 0;">Atas kejayaan menamatkan 3 Pusingan Cabaran Interaktif Sains</p>
+                    <p style="font-size: 18px; margin: 10px 0;">dengan pencapaian markah sebanyak:</p>
+                    <div style="font-size: 48px; font-weight: bold; color: #b8860b; font-family: 'Courier New', Courier, monospace;">
+                        <span id="cert-score">0</span> / 600
+                    </div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: flex-end; width: 80%; margin: 0 auto; margin-top: 20px;">
+                    <div style="text-align: center;">
+                        <div style="width: 150px; border-bottom: 1px solid #000; margin-bottom: 5px; height: 30px;"><!-- Signature logic removed, just a line --></div>
+                        <p style="font-size: 14px; margin: 0; font-weight: bold;">Cikgu Norkhairil bin Mohamad</p>
+                        <p style="font-size: 12px; margin: 0; color: #666;">Penyelaras Kuiz</p>
+                    </div>
+                    <div style="text-align: center;">
+                        <div style="width: 80px; height: 80px; background-color: #d4af37; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 5px auto; border: 2px dashed #fff; box-shadow: 0 0 0 2px #d4af37;">
+                            <span style="color: white; font-size: 10px; font-weight: bold; text-align: center;">SAINS<br>4 OXFORD</span>
+                        </div>
+                        <p id="cert-date" style="font-size: 12px; margin: 0;"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex gap-4">
+            <button id="download-cert-btn" class="btn-game px-6 py-3 rounded-lg font-bold bg-green-600 hover:bg-green-500 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                Muat Turun PDF/Imej
+            </button>
+            <button onclick="location.reload()" class="btn-game px-6 py-3 rounded-lg font-bold bg-gray-700 hover:bg-gray-600">
+                Main Semula
+            </button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Data Soalan (Tenaga & Bahan - Tahun 4) ---
+    const questionDatabase = {
+        // Pusingan 1: Soalan Cepat Tepat (Aras Rendah, 10 Mata, 30s)
+        round1: [
+            { q: "Matahari adalah sumber utama bagi tenaga...", options: ["Kinetik", "Haba dan Cahaya", "Keupayaan", "Bunyi"], a: 1, hint: "Ia menerangi bumi pada waktu siang." },
+            { q: "Antara berikut, yang manakah sumber tenaga yang boleh dibaharui?", options: ["Arang batu", "Petroleum", "Angin", "Gas asli"], a: 2, hint: "Ia menggerakkan kincir di ladang." },
+            { q: "Tenaga yang terhasil daripada objek yang bergetar ialah tenaga...", options: ["Bunyi", "Cahaya", "Elektrik", "Kinetik"], a: 0, hint: "Petik tali gitar untuk menghasilkannya." },
+            { q: "Apakah bentuk tenaga yang tersimpan dalam makanan?", options: ["Tenaga kimia", "Tenaga haba", "Tenaga kinetik", "Tenaga solar"], a: 0, hint: "Sama seperti yang tersimpan dalam bateri." },
+            { q: "Bahan yang membenarkan arus elektrik mengalir melaluinya dipanggil...", options: ["Penebat", "Konduktor", "Lut sinar", "Kondensator"], a: 1, hint: "Kebanyakan logam mempunyai sifat ini." },
+            { q: "Objek manakah yang merupakan penebat elektrik?", options: ["Paku besi", "Klip kertas", "Pemadam getah", "Sudu keluli"], a: 2, hint: "Bahan ini sering digunakan di hujung pensel." },
+            { q: "Proses air berubah menjadi wap air dipanggil...", options: ["Kondensasi", "Pembekuan", "Peleburan", "Penyejatan"], a: 3, hint: "Proses ini berlaku apabila menjemur pakaian." },
+            { q: "Bahan yang mempunyai bentuk dan isi padu yang tetap adalah dalam keadaan...", options: ["Pepejal", "Cecair", "Gas", "Plasma"], a: 0, hint: "Batu dan kayu adalah contohnya." },
+            { q: "Apabila ais dipanaskan, ia akan...", options: ["Membeku", "Melebur", "Mendidih", "Memejalwap"], a: 1, hint: "Berubah dari pepejal ke cecair." },
+            { q: "Tenaga yang dipunyai oleh objek yang bergerak dikenali sebagai tenaga...", options: ["Kinetik", "Keupayaan", "Kimia", "Haba"], a: 0, hint: "Kereta yang sedang memandu di jalan raya mempunyainya." }
+        ],
+        // Pusingan 2: Risiko Mata Berganda (Aras Sederhana, 20 Mata, 30s)
+        round2: [
+            { q: "Pilih urutan perubahan tenaga yang betul bagi sebuah radio yang menggunakan bateri.", options: ["Kimia → Elektrik → Bunyi", "Elektrik → Kimia → Bunyi", "Keupayaan → Kinetik → Bunyi", "Kimia → Haba → Bunyi"], a: 0, hint: "Fikirkan apa di dalam bateri, kemudian bagaimana radio berfungsi." },
+            { q: "Mengapakah pemegang kuali biasanya diperbuat daripada plastik atau kayu?", options: ["Supaya kuali kelihatan cantik", "Kerana ia adalah konduktor haba yang baik", "Kerana ia adalah penebat haba yang baik", "Supaya kuali menjadi lebih ringan"], a: 2, hint: "Untuk mengelakkan tangan kita daripada melecur." },
+            { q: "Apakah yang akan berlaku jika sumber tenaga yang tidak boleh dibaharui kehabisan?", options: ["Manusia boleh mencipta lebih banyak petroleum", "Kita terpaksa bergantung pada tenaga boleh dibaharui sepenuhnya", "Bumi akan berhenti berputar", "Tiada apa-apa perubahan akan berlaku"], a: 1, hint: "Kita perlu beralih kepada alternatif seperti solar dan angin." },
+            { q: "Semasa proses kondensasi, wap air kehilangan haba dan berubah menjadi...", options: ["Ais", "Cecair", "Gas oksigen", "Awan"], a: 1, hint: "Perhatikan titisan di luar gelas sejuk." },
+            { q: "Antara bahan berikut, yang manakah paling sukar dimampatkan?", options: ["Udara dalam belon", "Wap air", "Air paip", "Guli kaca"], a: 3, hint: "Pilih bahan yang berkeadaan pepejal." },
+            { q: "Tenaga keupayaan kenyal terdapat pada objek yang...", options: ["Diletakkan di tempat tinggi", "Diregangkan atau dimampatkan", "Sedang terbakar", "Bergerak laju"], a: 1, hint: "Fikirkan tentang gelang getah atau spring." },
+            { q: "Apakah kelebihan utama menggunakan tenaga suria (solar) berbanding bahan api fosil?", options: ["Ia lebih murah untuk dipasang", "Ia tidak mencemarkan alam sekitar", "Ia boleh digunakan pada waktu malam", "Ia menghasilkan lebih banyak tenaga kinetik"], a: 1, hint: "Fikirkan tentang pelepasan asap dan gas." },
+            { q: "Sebuah kereta mainan yang ditarik ke belakang dan dilepaskan menunjukkan perubahan tenaga...", options: ["Keupayaan → Kinetik", "Kinetik → Keupayaan", "Kimia → Kinetik", "Haba → Kinetik"], a: 0, hint: "Spring di dalam kereta mainan menyimpan tenaga sebelum dilepaskan." },
+            { q: "Mengapakah kabel elektrik dibalut dengan plastik?", options: ["Untuk mengurangkan rintangan", "Untuk mengelakkan renjatan elektrik", "Supaya kabel tahan lama", "Supaya kelihatan lebih kemas"], a: 1, hint: "Plastik bertindak sebagai penebat." },
+            { q: "Bahan Y mengambil bentuk bekas yang diisinya tetapi isi padunya tetap. Apakah keadaan bahan Y?", options: ["Pepejal", "Cecair", "Gas", "Buih"], a: 1, hint: "Air minuman adalah contoh bahan ini." }
+        ],
+        // Pusingan 3: Cabaran Jutawan (Aras Tinggi, 30 Mata, 30s)
+        round3: [
+            { q: "Dalam sebuah empangan hidroelektrik, air yang disimpan di tempat tinggi mempunyai tenaga ___. Apabila air dilepaskan, ia berubah menjadi tenaga ___.", options: ["Kinetik, Elektrik", "Keupayaan, Kinetik", "Haba, Kinetik", "Kimia, Elektrik"], a: 1, hint: "Kedudukan yang tinggi menyimpan tenaga pertama. Pergerakan air ialah tenaga kedua." },
+            { q: "Seketul ais berjisim 50g diletakkan di dalam cawan. Selepas 30 minit, ais itu cair sepenuhnya. Berapakah jisim air tersebut?", options: ["Kurang daripada 50g", "Lebih daripada 50g", "Tepat 50g", "Tidak dapat ditentukan"], a: 2, hint: "Prinsip keabadian jisim: perubahan keadaan tidak mengubah jumlah bahan." },
+            { q: "Antara pernyataan berikut, yang manakah BENAR tentang zarah-zarah dalam gas?", options: ["Tersusun rapat dan teratur", "Bergerak bebas secara rawak dengan pantas", "Hanya bergetar pada kedudukan tetap", "Mempunyai daya tarikan yang sangat kuat"], a: 1, hint: "Sebab itulah gas memenuhi keseluruhan ruang bilik." },
+            { q: "Mengapakah ruang kecil ditinggalkan pada sambungan landasan kereta api?", options: ["Untuk menjimatkan keluli", "Supaya kereta api lebih stabil", "Untuk membenarkan pengembangan pada cuaca panas", "Untuk memudahkan kerja penyelenggaraan"], a: 2, hint: "Besi bertindak balas terhadap tenaga haba dari matahari." },
+            { q: "Sebuah kipas syiling menggunakan tenaga elektrik untuk berfungsi. Apakah tenaga berguna dan tenaga terbuang yang dihasilkan?", options: ["Berguna: Kinetik, Terbuang: Haba", "Berguna: Bunyi, Terbuang: Kinetik", "Berguna: Haba, Terbuang: Bunyi", "Berguna: Kinetik, Terbuang: Cahaya"], a: 0, hint: "Tujuan kipas adalah untuk bergerak. Motor kipas yang berputar lama akan menjadi panas." },
+            { q: "Pilih cara TERBAIK untuk mengamalkan kecekapan penggunaan tenaga di rumah.", options: ["Membiarkan penyaman udara terpasang apabila tiada orang", "Menggunakan lampu pijar berbanding lampu LED", "Menutup suis peralatan elektrik apabila tidak digunakan", "Kerap membuka pintu peti sejuk"], a: 2, hint: "Langkah mudah untuk mengurangkan pembaziran elektrik." },
+            { q: "Semasa pembakaran lilin, apakah perubahan keadaan jirim yang berlaku kepada lilin tersebut secara berurutan?", options: ["Pepejal → Gas → Cecair", "Pepejal → Cecair → Gas", "Cecair → Pepejal → Gas", "Gas → Cecair → Pepejal"], a: 1, hint: "Lilin keras, cair kerana panas, kemudian sebahagian meruap untuk terbakar." },
+            { q: "Ahmad menuang air panas ke dalam gelas kaca yang sejuk. Tiba-tiba gelas itu retak. Mengapa?", options: ["Bahagian dalam gelas mengembang lebih cepat dari bahagian luar", "Air panas itu terlalu berat", "Gelas kaca menyerap tenaga kinetik", "Tekanan udara di luar gelas meningkat"], a: 0, hint: "Haba menyebabkan pengembangan tidak sekata pada kaca yang tebal." },
+            { q: "Apakah tenaga utama yang memacu kitaran air semula jadi di Bumi?", options: ["Tenaga kinetik dari angin", "Tenaga haba dari teras bumi", "Tenaga solar dari matahari", "Tenaga graviti dari bulan"], a: 2, hint: "Tenaga ini menyebabkan air dari lautan menyejat." },
+            { q: "Bahan manakah yang sesuai digunakan sebagai 'sinki haba' untuk menyerap dan menyingkirkan haba dengan cepat dari komponen elektronik?", options: ["Plastik", "Aluminium", "Kaca", "Kayu"], a: 1, hint: "Pilih bahan yang merupakan konduktor haba terbaik antara pilihan ini." }
+        ]
+    };
+
+    // --- State Variables ---
+    let playerName = "";
+    let score = 0;
+    let currentRound = 1;
+    let currentQuestionIndex = 0;
+    let currentQuestions = [];
+    let timer;
+    let timeLeft = 30;
+    const TIME_LIMIT = 30;
+    let canAnswer = false;
+    let lifelines = { fiftyFifty: true, hint: true };
+    
+    // Multipliers based on round
+    const scoreMultipliers = { 1: 10, 2: 20, 3: 30 };
+    const roundNames = { 1: "Soalan Cepat Tepat", 2: "Risiko Mata Berganda", 3: "Cabaran Jutawan" };
+    const roundDesc = { 
+        1: "10 Soalan Asas. Jawab pantas untuk 10 mata setiap satu!", 
+        2: "10 Soalan Sederhana. Fikir masak-masak, setiap jawapan bernilai 20 mata!", 
+        3: "10 Soalan Sukar. Buktikan anda jaguh Sains untuk 30 mata setiap satu!" 
+    };
+
+    // --- DOM Elements ---
+    const introScreen = document.getElementById('intro-screen');
+    const gameScreen = document.getElementById('game-screen');
+    const resultScreen = document.getElementById('result-screen');
+    const studentNameInput = document.getElementById('student-name');
+    const startBtn = document.getElementById('start-btn');
+    
+    // Game Elements
+    const displayName = document.getElementById('display-name');
+    const scoreDisplay = document.getElementById('score-display');
+    const roundIndicator = document.getElementById('round-indicator');
+    const roundNameDisplay = document.getElementById('round-name');
+    const qCounter = document.getElementById('q-counter');
+    const roundMultiplier = document.getElementById('round-multiplier');
+    const questionText = document.getElementById('question-text');
+    const timeDisplay = document.getElementById('time-display');
+    const timerCircle = document.getElementById('timer');
+    const options = [
+        document.getElementById('opt-0'),
+        document.getElementById('opt-1'),
+        document.getElementById('opt-2'),
+        document.getElementById('opt-3')
+    ];
+    
+    // Helpers & Modals
+    const btn5050 = document.getElementById('btn-5050');
+    const btnHint = document.getElementById('btn-hint');
+    const hintDisplay = document.getElementById('hint-display');
+    const hintText = document.getElementById('hint-text');
+    
+    const roundModal = document.getElementById('round-modal');
+    const roundModalContent = document.getElementById('round-modal-content');
+    const feedbackOverlay = document.getElementById('feedback-overlay');
+    const feedbackContent = document.getElementById('feedback-content');
+
+    // --- Initialization & Flow ---
+
+    startBtn.addEventListener('click', () => {
+        let rawName = studentNameInput.value.trim();
+        if (rawName === "") {
+            alert("Sila masukkan nama penuh anda untuk meneruskan permainan.");
+            return;
+        }
+        playerName = rawName.toUpperCase();
+        displayName.textContent = playerName;
+        
+        // Reset state
+        score = 0;
+        currentRound = 1;
+        updateScore(0);
+        lifelines = { fiftyFifty: true, hint: true };
+        btn5050.disabled = false;
+        btnHint.disabled = false;
+        
+        introScreen.classList.add('hidden');
+        gameScreen.classList.remove('hidden');
+        
+        showRoundIntro();
+    });
+
+    // Helper functions
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    function showRoundIntro() {
+        document.getElementById('round-modal-title').textContent = `PUSINGAN ${currentRound}`;
+        document.getElementById('round-modal-name').textContent = roundNames[currentRound];
+        document.getElementById('round-modal-desc').textContent = roundDesc[currentRound];
+        
+        let icon = currentRound === 1 ? '🚀' : (currentRound === 2 ? '⚡' : '💎');
+        document.getElementById('round-icon').textContent = icon;
+        
+        // Setup questions for the round
+        currentQuestionIndex = 0;
+        let roundKey = `round${currentRound}`;
+        // Clone and shuffle questions slightly (keep original indices for answers)
+        currentQuestions = [...questionDatabase[roundKey]];
+        
+        // UI updates
+        roundNameDisplay.textContent = `Pusingan ${currentRound}`;
+        roundMultiplier.textContent = `${scoreMultipliers[currentRound]} Mata`;
+        
+        if(currentRound === 1) roundIndicator.className = "bg-blue-900 px-4 py-2 rounded-lg border border-blue-500 animate-pulse";
+        if(currentRound === 2) roundIndicator.className = "bg-orange-900 px-4 py-2 rounded-lg border border-orange-500 animate-pulse";
+        if(currentRound === 3) roundIndicator.className = "bg-purple-900 px-4 py-2 rounded-lg border border-purple-500 animate-pulse";
+
+        roundModal.classList.remove('hidden');
+        setTimeout(() => {
+            roundModalContent.classList.remove('scale-95');
+            roundModalContent.classList.add('scale-100');
+        }, 50);
+    }
+
+    function startNextRound() {
+        roundModalContent.classList.remove('scale-100');
+        roundModalContent.classList.add('scale-95');
+        setTimeout(() => {
+            roundModal.classList.add('hidden');
+            loadQuestion();
+        }, 300);
+    }
+
+    function loadQuestion() {
+        if (currentQuestionIndex >= currentQuestions.length) {
+            // End of round
+            currentRound++;
+            if (currentRound > 3) {
+                endGame();
+            } else {
+                showRoundIntro();
+            }
+            return;
+        }
+
+        const qData = currentQuestions[currentQuestionIndex];
+        qCounter.textContent = `Soalan ${currentQuestionIndex + 1}/10`;
+        questionText.textContent = qData.q;
+        
+        hintDisplay.classList.add('hidden');
+
+        // Reset options
+        options.forEach((btn, index) => {
+            btn.querySelector('.opt-text').textContent = qData.options[index];
+            btn.classList.remove('correct', 'wrong', 'hidden-option');
+            btn.disabled = false;
+        });
+
+        canAnswer = true;
+        startTimer();
+    }
+
+    function startTimer() {
+        clearInterval(timer);
+        timeLeft = TIME_LIMIT;
+        updateTimerDisplay();
+        
+        timer = setInterval(() => {
+            timeLeft--;
+            updateTimerDisplay();
+            
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                handleTimeout();
+            }
+        }, 1000);
+    }
+
+    function updateTimerDisplay() {
+        timeDisplay.textContent = timeLeft;
+        const progress = (timeLeft / TIME_LIMIT) * 100;
+        
+        // Color transition: Green -> Yellow -> Red
+        let color = '#34d399'; // Green
+        if (timeLeft <= 10) color = '#fbbf24'; // Yellow
+        if (timeLeft <= 5) color = '#ef4444'; // Red
+        
+        timerCircle.style.background = `conic-gradient(${color} ${progress}%, #1f2937 ${progress}%)`;
+        timerCircle.style.boxShadow = `0 0 15px ${color}80`;
+    }
+
+    window.selectAnswer = function(selectedIndex) {
+        if (!canAnswer) return;
+        canAnswer = false;
+        clearInterval(timer);
+
+        const qData = currentQuestions[currentQuestionIndex];
+        const correctIndex = qData.a;
+        const pts = scoreMultipliers[currentRound];
+
+        // Disable all buttons
+        options.forEach(btn => btn.disabled = true);
+
+        if (selectedIndex === correctIndex) {
+            // Correct
+            options[selectedIndex].classList.add('correct');
+            updateScore(pts);
+            showFeedback('TEPAT!', `+${pts} Mata`, 'text-green-400', 'border-green-500', '✅');
+        } else {
+            // Wrong
+            options[selectedIndex].classList.add('wrong');
+            options[correctIndex].classList.add('correct'); // Show correct answer
+            showFeedback('SALAH', '+0 Mata', 'text-red-400', 'border-red-500', '❌');
+        }
+
+        setTimeout(() => {
+            currentQuestionIndex++;
+            loadQuestion();
+        }, 2500); // Wait 2.5s before next question
+    };
+
+    function handleTimeout() {
+        canAnswer = false;
+        const qData = currentQuestions[currentQuestionIndex];
+        
+        options.forEach(btn => btn.disabled = true);
+        options[qData.a].classList.add('correct'); // Highlight correct
+        
+        showFeedback('MASA TAMAT', '+0 Mata', 'text-yellow-400', 'border-yellow-500', '⏰');
+        
+        setTimeout(() => {
+            currentQuestionIndex++;
+            loadQuestion();
+        }, 2500);
+    }
+
+    function updateScore(points) {
+        score += points;
+        scoreDisplay.textContent = score;
+        if(points > 0) {
+            scoreDisplay.classList.remove('score-anim');
+            void scoreDisplay.offsetWidth; // Trigger reflow
+            scoreDisplay.classList.add('score-anim');
+        }
+    }
+
+    function showFeedback(title, desc, textClass, borderClass, icon) {
+        const titleEl = document.getElementById('feedback-title');
+        const contentEl = document.getElementById('feedback-content');
+        
+        titleEl.textContent = title;
+        titleEl.className = `text-5xl font-black mb-2 uppercase tracking-wider ${textClass}`;
+        document.getElementById('feedback-score').textContent = desc;
+        document.getElementById('feedback-icon').textContent = icon;
+        
+        contentEl.className = `bg-black bg-opacity-90 p-8 rounded-3xl border-4 ${borderClass} transform scale-50 opacity-0 transition-all duration-300 text-center`;
+        
+        feedbackOverlay.classList.remove('hidden');
+        
+        // Animate in
+        setTimeout(() => {
+            contentEl.classList.remove('scale-50', 'opacity-0');
+            contentEl.classList.add('scale-100', 'opacity-100');
+        }, 50);
+
+        // Hide after 2 seconds
+        setTimeout(() => {
+            contentEl.classList.remove('scale-100', 'opacity-100');
+            contentEl.classList.add('scale-50', 'opacity-0');
+            setTimeout(() => {
+                feedbackOverlay.classList.add('hidden');
+            }, 300);
+        }, 2000);
+    }
+
+    btn5050.addEventListener('click', () => {
+        if (!canAnswer || !lifelines.fiftyFifty) return;
+        
+        const qData = currentQuestions[currentQuestionIndex];
+        const correctIndex = qData.a;
+        
+        // Find 2 wrong options to hide
+        let wrongIndices = [0, 1, 2, 3].filter(i => i !== correctIndex);
+        wrongIndices = shuffleArray(wrongIndices).slice(0, 2); // Pick 2 random wrong answers
+        
+        wrongIndices.forEach(idx => {
+            options[idx].classList.add('hidden-option');
+        });
+
+        lifelines.fiftyFifty = false;
+        btn5050.disabled = true;
+        btn5050.classList.remove('bg-purple-600', 'hover:bg-purple-500');
+        btn5050.classList.add('bg-gray-600');
+    });
+
+    btnHint.addEventListener('click', () => {
+        if (!canAnswer || !lifelines.hint) return;
+        
+        const qData = currentQuestions[currentQuestionIndex];
+        hintText.textContent = qData.hint;
+        hintDisplay.classList.remove('hidden');
+        
+        lifelines.hint = false;
+        btnHint.disabled = true;
+        btnHint.classList.remove('bg-indigo-600', 'hover:bg-indigo-500');
+        btnHint.classList.add('bg-gray-600');
+    });
+
+    function endGame() {
+        gameScreen.classList.add('hidden');
+        resultScreen.classList.remove('hidden');
+        
+        document.getElementById('final-score').textContent = score;
+        
+        // Rank logic (Max score = 10*10 + 10*20 + 10*30 = 100 + 200 + 300 = 600)
+        let rank = "SAINTIS MUDA";
+        if (score >= 500) rank = "PROFESOR SAINS";
+        else if (score >= 350) rank = "PENYELIDIK HEBAT";
+        else if (score >= 200) rank = "PEMBANTU MAKMAL";
+        
+        document.getElementById('final-rank').textContent = rank;
+
+        // Trigger Confetti
+        var duration = 3 * 1000;
+        var animationEnd = Date.now() + duration;
+        var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 100 };
+
+        function randomInRange(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        var interval = setInterval(function() {
+            var timeLeft = animationEnd - Date.now();
+            if (timeLeft <= 0) return clearInterval(interval);
+            var particleCount = 50 * (timeLeft / duration);
+            confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+            confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+        }, 250);
+    }
+
+    const showCertBtn = document.getElementById('show-cert-btn');
+    const certWrapper = document.getElementById('cert-wrapper');
+    const resultContent = document.getElementById('result-content');
+
+    showCertBtn.addEventListener('click', () => {
+        // Populate certificate data
+        document.getElementById('cert-name').textContent = playerName;
+        document.getElementById('cert-score').textContent = score;
+        
+        const today = new Date();
+        const dateString = `${today.getDate()}/${today.getMonth()+1}/${today.getFullYear()}`;
+        document.getElementById('cert-date').textContent = `Tarikh: ${dateString}`;
+
+        // Adjust font size based on name length to fit in certificate
+        const nameEl = document.getElementById('cert-name');
+        if(playerName.length > 20) {
+            nameEl.style.fontSize = "32px";
+        } else if (playerName.length > 15) {
+            nameEl.style.fontSize = "36px";
+        } else {
+            nameEl.style.fontSize = "42px";
+        }
+
+        // Toggle Views
+        resultContent.classList.add('hidden');
+        certWrapper.classList.remove('hidden');
+        certWrapper.classList.add('flex');
+    });
+
+    document.getElementById('download-cert-btn').addEventListener('click', () => {
+        const certElement = document.getElementById('certificate-container');
+        
+        // Hide scrollbars temporarily for clean capture if needed, though wrapped div helps
+        html2canvas(certElement, {
+            scale: 2, // Higher resolution
+            backgroundColor: "#ffffff",
+            logging: false,
+            useCORS: true
+        }).then(canvas => {
+            // Create image from canvas
+            const imgData = canvas.toDataURL('image/jpeg', 1.0);
+            
+            // Create a fake link to trigger download
+            const link = document.createElement('a');
+            link.download = `Sijil_Sains_4_OXFORD_${playerName.replace(/\s+/g, '_')}.jpg`;
+            link.href = imgData;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+        }).catch(err => {
+            console.error("Ralat menjana sijil: ", err);
+            alert("Maaf, terdapat ralat semasa memuat turun sijil. Sila cuba lagi.");
+        });
+    });
+
+</script>
+</body>
+</html>
